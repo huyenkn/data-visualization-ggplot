@@ -3,27 +3,27 @@
 I used ggplot and ggnet (R) to create various types of charts with different ways of processing data and formatting charts. 
 
 ### Charts:
-1. Scatterplots
+##### 1. Scatterplots
 
-2. Distributions
+##### 2. Distributions
 + Histogram
 + Box plot
 
-3. Categorical plots
+##### 3. Categorical plots
 + Bar chart (horizontal and vertical bar charts)
 + Stacked bar chart
 + Clustered bar chart
 + Pyramid chart
 
-4. Area charts
+##### 4. Area charts
 + Area chart
 + Square area chart
 
-5. Time series charts
+##### 5. Time series charts
 + Line chart
 + Waterfall chart
 
-6. Network
+##### 6. Network
 
 ### Data: 
 1. Lending Club: The Lending Club data is LendingClub_LoanStats_2011_v2.csv. Lending Club is an online, peer-to-peer marketplace that connects borrowers and investors. I conducted some exploratory analysis on a dataset of past Lending Club loans, including loan details and information about the borrowers. Of particular interest are variables loan_amnt, which represents the amount of money requested by a borrower, and funded_amnt, which represents the amount of money actually
