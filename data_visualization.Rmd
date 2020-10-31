@@ -1,5 +1,9 @@
 ---
-title: "Data Visualization"
+title: "Data Visualization with ggplot and ggnet"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 \vspace{0.25in}
 
@@ -12,6 +16,8 @@ library(sna)
 library(network)
 knitr::opts_chunk$set(echo = TRUE)
 
+options(warn=-1)
+
 #make sure to set your working directory!
 knitr::opts_chunk$set(echo = TRUE)
 lc = read_csv('LendingClub_LoanStats_2011_v2.csv')
@@ -20,25 +26,48 @@ dji <- read_csv('DowJones_history.csv')
 thurman.soc <- read.csv("Thurman_Social_Edgelist.csv")
 thurman.org <- read.csv("Thurman_Office_Edgelist.csv")
 ```
-## Description
-Lending Club is an online, peer-to-peer marketplace that connects borrowers and investors. We will conduct some exploratory analysis on a dataset of past Lending Club loans, including loan details and information about the borrowers. Of particular interest are variables loan_amnt, which represents the amount of money requested by a borrower, and funded_amnt, which represents the amount of money actually funded by investors. A full data dictionary can be found in LCDataDictionary.xlsx.
+## Huyen Nguyen 
+Master student in Business Analytics, University of Maryland, College Park.
+
+## Data Description
+1. Lending Club: The Lending Club data is LendingClub_LoanStats_2011_v2.csv. Lending Club is an online, peer-to-peer marketplace that connects borrowers and investors. We will conduct some exploratory analysis on a dataset of past Lending Club loans, including loan details and information about the borrowers. Of particular interest are variables loan_amnt, which represents the amount of money requested by a borrower, and funded_amnt, which represents the amount of money actually funded by investors. A full data dictionary can be found in LCDataDictionary.xlsx.
+
+2. Dow Jones: The Dow Jones data is DowJones_history.csv. This contains the daily Open, Close, High and Low stock price for the Dow Jones industrial available index from late June through late Sept 2020. The data source is Yahoo!Finance.
+
+3. Thurman networks: Blake Thurman analyzed the employees at an office to understand how the network structure influenced power dynamics and success. There are two files: Thurman social networks and Thurman reporting structure. The social relationship data describes the informal relationship among the employees and the office data describes the reporting hierarchy. The paper is: In the office: Networks and coalitions.
 
 ## Part 1: Scatter plots
 
-a) Make a scatter plot relating the loan amount (the amount that each borrower requested) to the funded amount (the amount funded by investors). 
+a) Scatter plot
+Make a scatter plot relating the loan amount (the amount that each borrower requested) to the funded amount (the amount funded by investors). 
 
 ```{r question1a}
   #CHART 1A CODE
 lc %>%
-  ggplot(aes(x=loan_amnt, y=funded_amnt_inv)) +
-  geom_point(color="navyblue", alpha = 0.2) + #create a scatter plot, change the color to                             blue, make each data point transparent by setting alpha < 1
+# create a scatter plot, change color of data points to navyblue
+#make each data point transparent by setting alpha < 1
+  ggplot(aes(x=loan_amnt, y=funded_amnt_inv)) + 
+  geom_point(color="navyblue", alpha = 0.2) + 
+  
+# add informative title, caption, x and y axis
   labs(title = "Funded amount is always equal to or less than loan amount",
-       x = "Loan amount ($)", y = "Funded amount ($)", caption='Source: Lending Club dataset') +   # add informative title, caption, x and y axis
-  theme(panel.background = element_rect(fill="white", colour = "black"),  #Change the background
+       x = "Loan amount ($)", y = "Funded amount ($)", 
+       caption='Source: Lending Club dataset') +   
+  
+#Change the background: change background color from grey to white
+  theme(panel.background = element_rect(fill="white", colour = "black"),  
+        
+        #change gridline color to grey90
         panel.grid.major = element_line(colour = "grey90"),
-        axis.line = element_line(color="grey10"),  # #change color of axis lines to grey
-        legend.position = "bottom") +  #put legend at the bottom of the chart
-        scale_color_brewer(palette="Dark2") #provide sequential, diverging and qualitative colour schemes from ColorBrewer.
+        
+        #change color of axis lines to grey
+        axis.line = element_line(color="grey10"),  
+        
+        #put legend at the bottom of the chart
+        legend.position = "bottom") +  
+  
+        #provide sequential, diverging and qualitative colour schemes from ColorBrewer
+        scale_color_brewer(palette="Dark2") 
 
 ```
 
@@ -48,17 +77,26 @@ b) Make a plot exploring the relationship between annual income (the borrower's 
 ```{r question1b}
 #CHART 1B CODE
 lc %>%
+  # create a scatter plot, change color of data points to darkred
   ggplot(aes(x=loan_amnt, y=annual_inc)) +
   geom_point(color="darkred", alpha = 0.1) +
+  
+  #Use the logarithmic scale for both x and y axes
   scale_x_continuous(trans = 'log10') + scale_y_continuous(trans = 'log10')+
-  labs(title = "There is a positive correlation between borrower's annual income and loan amount", x = "Loan amount ($)", y = "Annual income ($)", caption='Source: Lending Club dataset') +
+  labs(
+title = "There is a positive correlation between borrower's annual income and loan amount",
+x = "Loan amount ($)", y = "Annual income ($)", 
+caption='Source: Lending Club dataset') +
   theme(panel.background = element_rect(fill="white", colour = "black"),
         panel.grid.major = element_line(colour = "grey90"),
         axis.line = element_line(color="grey10"),
-        plot.title = element_text(size=11),
+        plot.title = element_text(size=11.5),
         legend.position = "bottom") +
         scale_color_brewer(palette="Dark2") +
-  geom_smooth(method="lm", color="black", linetype=2, se=FALSE) #add a trendline; 'lm': linear regression, se: standard error.
+  
+  #add a trendline; 'lm': using smoothing method as linear regression, 
+  #se: standard error (display confidence interval around smooth?)
+  geom_smooth(method="lm", color="black", linetype=2, se=FALSE) 
 ```
 
 c) Bubble Chart and Colors
@@ -74,10 +112,13 @@ plot_data <- lc %>% drop_na(grade)  #drop NA
 
 #make a plot
 plot_data %>% 
+  
+  #use color to denote loan grade, and size of data points to denote loan amount.
   ggplot(aes(x=int_rate_new, y=dti, color=grade, size=loan_amnt)) + 
   geom_point(alpha = 0.3) +
   labs(title = "Relationship between interest rate and DTI by loan amount and loan grade",
-       x = "Interest rate (%)", y = "Borrower's debt to income ratio (DTI)", size="Loan amount", color="Grade")
+       x = "Interest rate (%)", y = "Borrower's debt to income ratio (DTI)", 
+       size="Loan amount", color="Grade")
 
 ```
 
@@ -88,7 +129,9 @@ a) Use a histogram to show the distribution of the Loan Amount (the amount reque
 ```{r question2a}
 #CHART 2A CODE
 lc %>% ggplot(aes(x=loan_amnt)) +
-  geom_histogram(bins=15, fill="darkred", color="white") + #create a histogram with 15 bins
+  
+  #create a histogram with 15 bins
+  geom_histogram(bins=15, fill="darkred", color="white") + 
   labs(title="Loan amount requested by the borrowers",
        caption = "Source: Lending Club dataset",
        x="Loan amount ($)", y="Number of Loans requested") +
@@ -113,8 +156,10 @@ b) Compare the distribution of the loan amount by the homeownership status by cr
 #CHART 2B CODE
 plot_data2 <- lc %>% drop_na(home_ownership)
 plot_data2 %>%
+  
+  #create a boxplot with home ownership on the x axis and loan amount on the y axis
   ggplot(aes(x=home_ownership, y=loan_amnt)) +
-  geom_boxplot(fill="darkred", alpha=0.6) +  #create a boxplot with home ownership on the x axis and loan amount on the y axis
+  geom_boxplot(fill="darkred", alpha=0.6) +  
   theme_bw() +
   theme(legend.position = "bottom",
         plot.title = element_text(size=14),
@@ -137,8 +182,13 @@ a) Create a bar chart with the average Loan Amount by Investment Grade for 2011.
 #CHART 3A CODE
 
 #preprocess data
-#get only data from 2011, grouped by loan grade, and calculate the average of loan amount for each loan grade.
-plot_data3 <- lc %>%filter(issue_year==2011)  %>%  group_by(grade) %>%summarize(mean_loans = mean(loan_amnt, na.rm=TRUE)) 
+
+#get only data from 2011, grouped by loan grade, and 
+#calculate the average of loan amount for each loan grade.
+plot_data3 <- lc %>%filter(issue_year==2011)  %>%  
+        group_by(grade) %>%
+        summarize(mean_loans = mean(loan_amnt, na.rm=TRUE)) 
+
 #make a plot
 plot_data3 %>% na.omit() %>%
   ggplot(aes(x=grade, y=mean_loans)) +
@@ -164,15 +214,26 @@ b) Show the average loan amount by investment grade for mortgage holders vs. ren
 #CHART 3B CODE
 
 #preprocess data
-#get only data from 2011 and for mortgage holders vs. renters, grouped by loan grade and home ownership, and calculate the average of loan amount for each loan grade and home ownership.
-plot_data4 <- lc %>%filter(issue_year==2011, home_ownership=='MORTGAGE'|home_ownership=='RENT')  %>%  group_by(grade, home_ownership) %>%summarize(mean_loans = mean(loan_amnt, na.rm=TRUE))
+
+#get only data from 2011 and for mortgage holders vs. renters, 
+#grouped by loan grade and home ownership,
+#and calculate the average of loan amount for each loan grade and home ownership.
+plot_data4 <- lc %>%filter(issue_year==2011,
+      home_ownership=='MORTGAGE'|home_ownership=='RENT')  %>%  
+      group_by(grade, home_ownership) %>%
+      summarize(mean_loans = mean(loan_amnt, na.rm=TRUE))
 
 #make a plot
+
+#create a cluster chart with loan grade on the x axis and loan average on the y axis 
+#for mortgage holders vs. renters (home ownership)
 plot_data4 %>%
   ggplot(aes(x=grade, y=mean_loans, group=home_ownership)) +
-  geom_col(aes(fill=home_ownership), position="dodge") +  #create a cluster chart with loan grade on the x axis and loan average on the y axis for mortgage holders vs. renters (home ownership)
+  geom_col(aes(fill=home_ownership), position="dodge") +  
   labs(y="Average loan amount ($)", x="Investment grade",
-       title="Average loan amount by investment grade for mortgage holders and renters in 2011") +
+title="Average loan amount by investment grade for mortgage holders and renters in 2011") +
+  
+  #manually fill two types of ownership with custom colors
   scale_fill_manual(name="",breaks=c("MORTGAGE","RENT"),
                     values=c("darkred", "grey70")) +
   geom_hline(yintercept = 0) +
@@ -189,15 +250,23 @@ c) Show the total loan amount by investment grade in 2011. Break each grade into
 #CHART 3C CODE
 
 #preprocess data
-plot_data5 <- lc %>%filter(issue_year==2011) %>% mutate(`Home ownership`= ifelse(home_ownership == "MORTGAGE", "Mortgage","All others")) %>%  group_by(grade, `Home ownership`) %>%summarize(total_loans = sum(loan_amnt, na.rm=TRUE)/1000000) 
+plot_data5 <- lc %>% 
+  filter(issue_year==2011) %>% 
+mutate(
+  `Home ownership`= ifelse(home_ownership == "MORTGAGE", "Mortgage","All others")) %>%
+  group_by(grade, `Home ownership`) %>%
+  summarize(total_loans = sum(loan_amnt, na.rm=TRUE)/1000000) 
 
 #make a plot
 plot_data5 %>% na.omit() %>% 
-  ggplot(aes(x=grade, y=total_loans, group=`Home ownership`)) + #create a stacked bar showing the total loan amount by investment grade, breaking each grade into mortgage holders vs. all others.
+  
+  #create a stacked bar showing the total loan amount by investment grade, 
+  #break each grade into mortgage holders vs. all others.
+  ggplot(aes(x=grade, y=total_loans, group=`Home ownership`)) + 
   geom_col(aes(fill=`Home ownership`)) +
   scale_fill_brewer(palette = "Set1") +
     labs(y="Total loan amount (millions of $)", x="Investment grade",
-       title="Total loan amount by investment grade of mortage holders and the others in 2011") +
+title="Total loan amount by investment grade of mortage holders and the others in 2011") +
   geom_hline(yintercept = 0) +
   theme(panel.background = element_blank(),
         plot.title = element_text(size=12),
@@ -205,21 +274,33 @@ plot_data5 %>% na.omit() %>%
         panel.grid.major.y = element_line(color="grey80", linetype = 3))
 
 ```
-## Part 4: 
 
-#### 4a.Pyramid Chart
-**Use patchwork to create a pyramid chart. Place a label for the Loan Grade in the center, and display the number of loans, organized by the purpose of the debt (group debt consolidation and credit cards together versus all other loan purposes).** 
+
+
+## Part 4: Pyramid and square area chart
+
+#### a) Pyramid Chart
+Use patchwork to create a pyramid chart. Place a label for the Loan Grade in the center, and display the number of loans, organized by the purpose of the debt (group debt consolidation and credit cards together versus all other loan purposes).
 
 Create one chart with the number of loans for debt (debt consolidation and credit cards), and create a second chart with the number of non-debt loans (all other loan purposes). Remember to change the levels of the Loan Grade factor so that A is at the top of the chart.  Use patchwork to combine the two charts.
 
 ```{r question4a}
 #preprocess data
 data1 <- lc %>% 
-  mutate(loan_purpose= ifelse(purpose == "debt_consolidation"|purpose == "credit_card", "debt_loan","nondebt_loan")) %>% #create new column called loan_purpose to categorize loans into debt loans and non-debt loans
+  
+  #create new column called loan_purpose to categorize loans into debt loans 
+  #and non-debt loans
+  mutate(loan_purpose= ifelse(
+    purpose == "debt_consolidation"|purpose == "credit_card", 
+    "debt_loan","nondebt_loan")) %>% 
+  
+  #calculate the total number of loans for each loan type
   select(grade, loan_purpose) %>% group_by(grade, loan_purpose) %>% 
-  summarise(num=n()) %>% #calculate the total number of loans for each loan type
+  summarise(num=n()) %>% 
   na.omit() %>% 
-  mutate(num_sign= ifelse(loan_purpose == 'debt_loan', -num, num)) #create num_sign column to change the sign of the number of debt-loans into negative numbers.
+  
+  #create num_sign column to change the sign of number of debt-loans into negative numbers.
+  mutate(num_sign= ifelse(loan_purpose == 'debt_loan', -num, num)) 
 
 #create the first bar chart for non-debt loans
 nondebt_chart <- data1 %>% 
@@ -233,7 +314,9 @@ nondebt_chart <- data1 %>%
         panel.grid.major.x = element_line(color="grey80"),
         panel.background = element_rect(fill="white"),
         axis.text.y = element_text(hjust=0.5)) +
-  scale_y_discrete(limits=c('G', 'F', 'E', 'D', 'C', 'B', 'A')) #sort the loan grades on the y axis to make sure grade A is on the top of the chart.
+  
+  #sort the loan grades on the y axis to make sure grade A is on the top of the chart.
+  scale_y_discrete(limits=c('G', 'F', 'E', 'D', 'C', 'B', 'A')) 
 
 #create the second bar chart for debt loans
 debt_chart <- data1 %>% 
@@ -247,11 +330,13 @@ debt_chart <- data1 %>%
         axis.ticks = element_blank(),
         panel.grid.major.x = element_line(color="grey80"),
         panel.background = element_rect(fill="white")) +
+  
+  #change the scale of x axis to positive numbers
   scale_x_continuous(breaks=c(0,-2000,-4000,-6000),
-                     labels = c(0,2000,4000,6000)) + #change the scale of x axis to positive numbers
+                     labels = c(0,2000,4000,6000)) + 
   scale_y_discrete(limits=c('G', 'F', 'E', 'D', 'C', 'B', 'A'))
 
-#combine two charts using patchwork
+#combine two charts using patchwork to create a pyramid chart
 debt_chart + nondebt_chart + 
   plot_annotation(
     title = 'Number of debt loans and non-debt loans by grade in 2011',
@@ -261,8 +346,8 @@ debt_chart + nondebt_chart +
 
 ```
 
-#### 4b. Square Area Chart
-**Make a square area chart that shows that "Out of every 100 phone screens, we bring 25 candidates onsite, and extend 9 offers.** 
+#### b) Square Area Chart
+Make a square area chart that shows that "Out of every 100 phone screens, we bring 25 candidates onsite, and extend 9 offers.
 
 ```{r question4b}
 # make the grid of 100 squares (10 x 10 grid)
@@ -317,27 +402,38 @@ q2
 
 ```
 
-### Part 5: Time Series (20 points)
+### Part 5: Time Series
 
-#### 5a. Multiple Line Chart
-**Create a line chart of the average loan amount in each of the loan grades over time. Highlight loan grade A and keep the other shades light grey.**
+#### a. Multiple Line Chart
+Create a line chart of the average loan amount in each of the loan grades over time. Highlight loan grade A and keep the other shades light grey.
 
 ```{r question5a}
 #preprocess data
-data2a <- lc %>% separate(issue_d, c('date', 'month'), sep='-')
-data2a <- data2a %>% group_by(grade, month) %>% summarize(mean_loan = mean(loan_amnt)) %>% mutate(monthf = factor(month,
+data2a <- lc %>% 
+  separate(issue_d, c('date', 'month'), sep='-')
+  data2a <- data2a %>% 
+  group_by(grade, month) %>% 
+  summarize(mean_loan = mean(loan_amnt)) %>%
+  
+  #sort months manually from Jan to Dec, not by alphabetical order (by default).
+  mutate(monthf = factor(month,
                         levels=c("Jan","Feb","Mar",
                                  "Apr","May","Jun",
                                  "Jul","Aug","Sep",
                                  "Oct","Nov","Dec"),
-                        ordered=TRUE))  #sort months manually from Jan to Dec, not by alphabetical order (by default).
-data2a <- data2a %>% mutate(two_grades= ifelse(grade == "A", "A","Others")) #Separate loan grade A from others.
+                        ordered=TRUE))  
+
+#separate loan grade A from others
+data2a <- data2a %>% 
+  mutate(two_grades= ifelse(grade == "A", "A","Others")) 
 
 #make a plot
 data2a %>% na.omit() %>%
  ggplot(aes(x=monthf, y=mean_loan, group=grade)) +
  geom_line(aes(color=as.factor(two_grades))) +  #create line chart
-labs(x = "Month", y="Average Loans", title = " Average loan amount of grade A versus other loan grades in 2011", caption="Source: Lending Club dataset", color = "Grade") +
+labs(x = "Month", y="Average Loans", 
+     title = " Average loan amount of grade A versus other loan grades in 2011",
+     caption="Source: Lending Club dataset", color = "Grade") +
   geom_hline(yintercept = 0) +
   theme(axis.ticks = element_blank(),
         legend.position = "bottom",
@@ -351,29 +447,40 @@ labs(x = "Month", y="Average Loans", title = " Average loan amount of grade A ve
         axis.title = element_text(face="bold"),
         axis.line.y = element_line(color="black"),
         plot.caption = element_text(face="italic")) +
+  
+  #highlight loan grade A and keep the other shades light grey.
    scale_color_manual(breaks = c("A", 'Others'),
-                     values = c("blue", "grey70")) #highlight loan grade A and keep the other shades light grey.
+                     values = c("blue", "grey70")) 
 
 ```
 
-#### 5b. Area chart
-**Create an area chart showing the total number of loans for debt-related categories (credit cards and debt consolidation), versus all other types over time.**
+#### b. Area chart
+Create an area chart showing the total number of loans for debt-related categories (credit cards and debt consolidation), versus all other types over time.
 
 ```{r question5b}
 
-data2b <- lc %>% separate(issue_d, c('date', 'month'), sep='-') %>% mutate(loan_purpose= ifelse(purpose == "debt_consolidation"|purpose == "credit_card", "Debt loan","Non-debt loan"))
+data2b <- lc %>% 
+  separate(issue_d, c('date', 'month'), sep='-') %>% 
+  mutate(loan_purpose= ifelse(
+    purpose == "debt_consolidation"|purpose == "credit_card", "Debt loan","Non-debt loan"))
 
-data2b <-data2b %>% group_by(loan_purpose, month) %>% summarise(num=n()) %>% mutate(monthf = factor(month,
+data2b <-data2b %>% 
+  group_by(loan_purpose, month) %>% 
+  summarise(num=n()) %>% 
+  
+  #sort months manually from Jan to Dec, not by alphabetical order (by default).
+  mutate(monthf = factor(month,
                         levels=c("Jan","Feb","Mar",
                                  "Apr","May","Jun",
                                  "Jul","Aug","Sep",
                                  "Oct","Nov","Dec"),
-                        ordered=TRUE))  #sort months manually from Jan to Dec, not by alphabetical order (by default).
+                        ordered=TRUE))  
 
 data2b %>% na.omit() %>%
   ggplot(aes(x=monthf, y=cumsum(num), group=loan_purpose)) +
   geom_area(aes(fill=loan_purpose)) +  #create area chart
-  labs(x = "Month", y="Number of loans", title='Number of loans for debt-related categories versus all other types in 2011',
+  labs(x = "Month", y="Number of loans", 
+       title='Number of loans for debt-related categories versus all other types in 2011',
        caption="Source: Lending Club dataset") +
     geom_hline(yintercept = 0) +
   theme(legend.position = "bottom",
@@ -394,8 +501,8 @@ data2b %>% na.omit() %>%
 
 ```
 
-#### 2c. Waterfall Chart
-**Create the waterfall chart for the entire DJI data. Include a stacked bar for the afterhours trading.**
+#### c. Waterfall Chart
+Create the waterfall chart for the entire DJI data. Include a stacked bar for the afterhours trading.
 
 Data Dictionary:
 *Date*: The trading date (Monday through Friday)
@@ -425,7 +532,9 @@ data2c.tmp2 <- data2c.tmp1 %>%
 data2c.tmp = rbind(data2c.tmp1, data2c.tmp2)
 
 #create waterfall chart
-waterfall <- ggplot(data2c.tmp, aes(x = Date, fill = Direction, linetype=AfterHours, colour=AfterHours, group=AfterHours)) + 
+waterfall <- ggplot(data2c.tmp, 
+                    aes(x = Date, fill = Direction, linetype=AfterHours, 
+                        colour=AfterHours, group=AfterHours)) + 
   geom_rect(aes(xmin = Date - 0.4, # control bar gap width
                 xmax = Date + 0.4, 
                 ymin = Open,
@@ -451,8 +560,8 @@ waterfall
 
 ### Part 6: Networks (10 points)
 
-#### 6a. Reporting Network 
-**Use ggnet to create the hierarchy reporting network in the Thurman office data. Label the most central person in the advice network.**
+#### a. Reporting Network 
+Use ggnet to create the hierarchy reporting network in the Thurman office data. Label the most central person in the advice network.
 
 ```{r question6a}
 orgnet <- network(thurman.org, directed=T)
@@ -484,8 +593,8 @@ ggnet2(orgnet,
 
 ```
 
-#### 3b. Social network
-**Create the social network in the Thurman data. Change the size of the nodes according to their total degree. Color the nodes varying shades of gray based on their  betweenness centrality. Specifically label the node with the highest betweenness centrality. Include the name of this most central person in the graph title.**
+#### b. Social network
+Create the social network in the Thurman data. Change the size of the nodes according to their total degree. Color the nodes varying shades of gray based on their  betweenness centrality. Specifically label the node with the highest betweenness centrality. Include the name of this most central person in the graph title.
 
 ```{r question6b}
 socnet <- network(thurman.soc, directed=T)
