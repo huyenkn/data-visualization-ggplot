@@ -1,4 +1,4 @@
-# data_visualization-ggplot-ggnet
+# Data visualization with ggplot and ggnet
 
 I used ggplot and ggnet (R) to create various types of charts with different ways of processing data and formatting charts. 
 
